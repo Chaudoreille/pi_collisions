@@ -1,4 +1,5 @@
 import wx
+from block import Block
 
 class PiFrame(wx.Frame):
     def __init__(self, *args, **kw):
@@ -8,27 +9,13 @@ class PiFrame(wx.Frame):
         # create a panel in the Frame
         panel = wx.Panel(self)
 
-        # put some text with a larger bold font on it
-
-        # static = wx.StaticText(panel, label="Hello World!")
-
-        # font = static.GetFont()
-        # font.PointSize += 10
-        # font = font.Bold()
-        # static.SetFont(font)
-
-        # create a sizer to manage the layout of child widgets
-
-        # sizer = wx.BoxSizer(wx.VERTICAL)
-        # sizer.Add(static, wx.SizerFlags().Border(wx.TOP|wx.LEFT, 25))
-        # panel.SetSizer(sizer)
-
         # create a menu bar
         self.makeMenuBar()
 
         # create a status bar
         self.CreateStatusBar()
-        self.SetStatusText("Welcome to Collision counter")
+        self.SetStatusText("Welcome to Collision Counter")
+        self.InitUI()
 
     def makeMenuBar(self):
         """
@@ -70,14 +57,81 @@ class PiFrame(wx.Frame):
         self.Bind(wx.EVT_MENU, self.OnExit, exitItem)
         self.Bind(wx.EVT_MENU, self. OnAbout, aboutItem)
 
+    def InitUI(self) :
+        # Initiate the "drawing board"
+        self.blocks = [Block(10, 1), Block(200, 10000)]
+
+        self.Bind(wx.EVT_PAINT, self.OnPaint)
+        self.Centre()
+        self.Show(True)
+
+    def OnEditBlocks(self, event):
+        """ Edit Block masses. """
+
+    def OnPaint(self, event):
+        dc = wx.PaintDC(self)
+        frame = {
+            "top" : 10,
+            "bottom" : self.GetSize()[1] - 90,
+            "left" : 10,
+            "right" : self.GetSize()[0] - 20
+        }
+
+        # set Background color
+        dc.SetBackground(wx.Brush("white"))
+        dc.Clear()
+
+        # draw frame
+        dc.SetBrush(wx.Brush("black"))
+        dc.DrawLine(frame["left"], frame["bottom"], frame["left"], frame["top"])
+        dc.DrawLine(frame["left"], frame["bottom"], frame["right"], frame["bottom"])
+
+        # this draws the little "solid wall" hash lines on left border
+        height = frame["bottom"]
+
+        while height >= frame["top"] + 10:
+            dc.DrawLine(frame["left"] - 10, height, frame["left"], height - 10)
+            height -= 15
+
+        # define a mass multiplier so that the blocks are (almost) always in frame. Scale both blocks with the multiplier
+        # We order blocks by size. biggest block defines mutliplier first
+        self.blocks.sort(key = lambda x : x.mass)
+        biggestBlock = self.blocks[-1]
+        smallestBlock = self.blocks[0]
+
+        multiplier = 0.1 * (frame["right"] - frame["left"]) / biggestBlock.mass
+
+        # if smallest block isn't visible, we make it visible (fixed minimum of 5x5 pixels)
+        # and the bigger block will scale accordingly
+        # a too big of a difference between the two blocks will make the bigger block go out of frame.
+        if (smallestBlock.mass * multiplier < 5):
+            multiplier = 5 / smallestBlock.mass
+
+        minimalWindowHeight = biggestBlock.mass * multiplier + frame["top"] + 90
+
+        # if window is too small to display the bigger block,
+        # we enlarge the window to display the block (to screen size limit)
+        if (minimalWindowHeight > self.GetSize()[1]):
+            self.SetSize(0, 0, minimalWindowHeight * 2, minimalWindowHeight)
+
+        # draw Blocks in frame
+        # 0 is top-left for wxPython but bottom-left on frame.
+        # Taking that in consideration, all our drawings on Y axis will be "substracted" from frame["bottom"]
+        for block in self.blocks:
+            dc.SetBrush(wx.Brush(wx.Colour(255,255, 0)))
+            dc.DrawRectangle(frame["left"] + block.x, frame["bottom"] - block.mass * multiplier + 1, block.mass * multiplier, block.mass * multiplier)
+
+    # example function
     def OnExit(self, event):
         """ Close the frame, terminating the application."""
         self.Close(True)
 
+    # example function // no use
     def OnHello(self, event):
         """Say hello to the user."""
         wx.MessageBox('Hello user!')
 
+    # example function
     def OnAbout(self, event):
         """Display an About Dialog"""
         wx.MessageBox("Set masses for 2 blocks and ravel before their number of collisions",
@@ -89,5 +143,6 @@ if __name__ == '__main__':
     # the frame, show it and start the event loop
     app = wx.App()
     frame = PiFrame(None, title="Collision counter")
+    frame.SetSize(0, 0, 1000, 500)
     frame.Show()
     app.MainLoop()

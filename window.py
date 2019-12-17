@@ -29,7 +29,8 @@ class PiFrame(wx.Frame):
 
         # the "\t..." syntax defines an accelerator key that also triggers
         # the same event
-        helloItem = fileMenu.Append(-1, "&Hello...\tCtrl-H", "Help string shown in status bar for this menu item")
+        helloItem = fileMenu.Append(-1, "&Hello...\tCtrl-H",
+                    "Help string shown in status bar for this menu item")
         fileMenu.AppendSeparator()
 
         # When using a stock ID we don't need to specify the menu item's label
@@ -59,7 +60,7 @@ class PiFrame(wx.Frame):
 
     def InitUI(self) :
         # Initiate the "drawing board"
-        self.blocks = [Block(10, 1), Block(200, 10000)]
+        self.blocks = [Block(10, 1), Block(200, 100)]
 
         self.Bind(wx.EVT_PAINT, self.OnPaint)
         self.Centre()
@@ -70,11 +71,22 @@ class PiFrame(wx.Frame):
 
     def OnPaint(self, event):
         dc = wx.PaintDC(self)
+        controlPanelHeight = 42
+        bottomWindow = 78
+        framePadding = 10
+
         frame = {
-            "top" : 10,
-            "bottom" : self.GetSize()[1] - 90,
-            "left" : 10,
-            "right" : self.GetSize()[0] - 20
+            "top" : framePadding,
+            "bottom" : self.GetSize()[1] - bottomWindow -
+            controlPanelHeight - framePadding,
+            "left" : framePadding,
+            "right" : self.GetSize()[0] - 2 * framePadding
+        }
+        controlPanel = {
+            "top" : self.GetSize()[1] - bottomWindow - controlPanelHeight,
+            "bottom" : self.GetSize()[1] - bottomWindow,
+            "left" : 0,
+            "right" : self.GetSize()[0],
         }
 
         # set Background color
@@ -83,8 +95,15 @@ class PiFrame(wx.Frame):
 
         # draw frame
         dc.SetBrush(wx.Brush("black"))
-        dc.DrawLine(frame["left"], frame["bottom"], frame["left"], frame["top"])
-        dc.DrawLine(frame["left"], frame["bottom"], frame["right"], frame["bottom"])
+        dc.DrawLine(frame["left"], frame["bottom"],
+                    frame["left"], frame["top"])
+        dc.DrawLine(frame["left"], frame["bottom"],
+                    frame["right"], frame["bottom"])
+
+        #draw control Panel
+        dc.SetBrush(wx.Brush(wx.Colour(120,120,250)))
+        dc.DrawRectangle(controlPanel["left"], controlPanel["top"],
+                         controlPanel["right"], controlPanelHeight)
 
         # this draws the little "solid wall" hash lines on left border
         height = frame["bottom"]
@@ -93,7 +112,8 @@ class PiFrame(wx.Frame):
             dc.DrawLine(frame["left"] - 10, height, frame["left"], height - 10)
             height -= 15
 
-        # define a mass multiplier so that the blocks are (almost) always in frame. Scale both blocks with the multiplier
+        # define a mass multiplier so that the blocks are (almost)
+        # always in frame. Scale both blocks with the multiplier
         # We order blocks by size. biggest block defines mutliplier first
         self.blocks.sort(key = lambda x : x.mass)
         biggestBlock = self.blocks[-1]
@@ -101,13 +121,16 @@ class PiFrame(wx.Frame):
 
         multiplier = 0.1 * (frame["right"] - frame["left"]) / biggestBlock.mass
 
-        # if smallest block isn't visible, we make it visible (fixed minimum of 5x5 pixels)
+        # if smallest block isn't visible, we make it visible
+        # fixed minimum of 5x5 pixels
         # and the bigger block will scale accordingly
-        # a too big of a difference between the two blocks will make the bigger block go out of frame.
+        # a too big of a difference between the two blocks will make
+        # the bigger block go out of frame.
         if (smallestBlock.mass * multiplier < 5):
             multiplier = 5 / smallestBlock.mass
 
-        minimalWindowHeight = biggestBlock.mass * multiplier + frame["top"] + 90
+        minimalWindowHeight = biggestBlock.mass * multiplier + bottomWindow
+                            + controlPanelHeight + 2 * framePadding
 
         # if window is too small to display the bigger block,
         # we enlarge the window to display the block (to screen size limit)
@@ -116,10 +139,13 @@ class PiFrame(wx.Frame):
 
         # draw Blocks in frame
         # 0 is top-left for wxPython but bottom-left on frame.
-        # Taking that in consideration, all our drawings on Y axis will be "substracted" from frame["bottom"]
+        # Taking that in consideration, all our drawings on Y axis will be
+        # "substracted" from frame["bottom"]
         for block in self.blocks:
             dc.SetBrush(wx.Brush(wx.Colour(255,255, 0)))
-            dc.DrawRectangle(frame["left"] + block.x, frame["bottom"] - block.mass * multiplier + 1, block.mass * multiplier, block.mass * multiplier)
+            dc.DrawRectangle(frame["left"] + block.x,
+                             frame["bottom"] - block.mass * multiplier + 1,
+                             block.mass * multiplier, block.mass * multiplier)
 
     # example function
     def OnExit(self, event):
@@ -134,7 +160,8 @@ class PiFrame(wx.Frame):
     # example function
     def OnAbout(self, event):
         """Display an About Dialog"""
-        wx.MessageBox("Set masses for 2 blocks and ravel before their number of collisions",
+        wx.MessageBox("Set masses for 2 blocks and ravel\
+                       before their number of collisions",
         "About Collision counter",
         wx.OK|wx.ICON_INFORMATION)
 

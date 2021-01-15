@@ -2,90 +2,57 @@ import wx
 from block import Block
 
 
-class PiFrame(wx.Frame):
+class CollisionFrame(wx.Frame):
     def __init__(self, *args, **kw):
         # ensure the parent is initialized
-        super(PiFrame, self).__init__(*args, **kw)
+        super(CollisionFrame, self).__init__(*args, **kw)
 
-        # create a menu bar
-        self.makeMenuBar()
-
-        # create sizers for buttons
+        self.buttons = {}
+        self.display_elements = {}
+        self.timer = wx.Timer(self)
         self.panel = wx.Panel(self, wx.ID_ANY)
-        vbox = wx.BoxSizer(wx.VERTICAL)
-        hbox = wx.BoxSizer(wx.HORIZONTAL)
-        self.playBtn = wx.Button(self.panel, wx.ID_ANY, "play")
-        self.playBtn.Bind(wx.EVT_BUTTON, self.MoveBlocks())
 
-        hbox.Add(self.playBtn, 0, wx.ALIGN_BOTTOM | wx.BOTTOM, 5)
-        vbox.Add(hbox, 1, wx.ALIGN_CENTER)
+        # init User Interface
+        self.init_UI()
 
-        self.panel.SetSizer(vbox)
-        self.Centre()
-
-        # create a status bar
+    def init_UI(self):
         self.CreateStatusBar()
         self.SetStatusText("Welcome to Collision Counter")
-        self.InitUI()
 
-    def MoveBlocks(self):
-        pass
+        self.create_buttons()
 
-    def makeMenuBar(self):
-        """
-        A menu bar is composed of menus, which are composed of menu items.
-        This method builds a set of menus and binds handlers to be called
-        when the menu item is selected.
-        """
+        # create sizers for buttons
 
-        # Make a file menu with Hello and Exit items
-        fileMenu = wx.Menu()
+        self.Centre()
 
-        # the "\t..." syntax defines an accelerator key that also triggers
-        # the same event
-        helloItem = fileMenu.Append(-1, "&Hello...\tCtrl-H",
-                                    "Help string shown in status bar for this \
-                                    menu item")
-        fileMenu.AppendSeparator()
-
-        # When using a stock ID we don't need to specify the menu item's label
-        exitItem = fileMenu.Append(wx.ID_EXIT)
-
-        # Now a help menu for the about item
-        helpMenu = wx.Menu()
-        aboutItem = helpMenu.Append(wx.ID_ABOUT)
-
-        # Make the menu bar and add the two menus to it. The '&' defines
-        # that the next letter is the "mnemonic" for the menu item. On the
-        # plateforms that support it thise letters are underlined and can be
-        # triggered from the keyboard.
-        menuBar = wx.MenuBar()
-        menuBar.Append(fileMenu, "&File")
-        menuBar.Append(helpMenu, "&Help")
-
-        # Give the menu bar to the frame
-        self.SetMenuBar(menuBar)
-
-        # Finally associate a handler function with the EVT_MENU event for
-        # each of the menu items. That means that when that menu item is
-        # activated then the associated handler function will be called.
-        self.Bind(wx.EVT_MENU, self.OnHello, helloItem)
-        self.Bind(wx.EVT_MENU, self.OnExit, exitItem)
-        self.Bind(wx.EVT_MENU, self. OnAbout, aboutItem)
-
-    def InitUI(self):
         # Initiate the "drawing board"
         self.blocks = [Block(10, 10), Block(200, 100)]
 
-        self.Bind(wx.EVT_PAINT, self.OnPaint)
+        self.Bind(wx.EVT_PAINT, self.on_paint)
         self.Centre()
         self.Show(True)
 
-    def OnEditBlocks(self, event):
-        """ Edit Block masses. """
+    def create_buttons(self):
+        play_button = wx.Button(self.panel, wx.ID_ANY, "Play")
+        play_button.Bind(wx.EVT_BUTTON, self.on_play)
+
+        vbox = wx.BoxSizer(wx.VERTICAL)
+        hbox = wx.BoxSizer(wx.HORIZONTAL)
+        hbox.Add(play_button, 0, wx.ALIGN_BOTTOM | wx.BOTTOM, 5)
+        vbox.Add(hbox, 1, wx.ALIGN_CENTER)
+
+        self.panel.SetSizer(vbox)
+        self.buttons["play"] = play_button
+
+    # def on_edit_blocks(self, event):
+    #     """ Edit Block masses. """
+    #     pass
+
+    def on_timer(self, event):
+        # execute every 10 ms
         pass
 
-    def OnPaint(self, event):
+    def on_paint(self, event):
         dc = wx.PaintDC(self)
         controlPanelHeight = 42
         bottomWindow = 78
@@ -158,20 +125,10 @@ class PiFrame(wx.Frame):
                              frame["bottom"] - block.mass * multiplier + 1,
                              block.mass * multiplier, block.mass * multiplier)
 
-    # example function
-    def OnExit(self, event):
-        """ Close the frame, terminating the application."""
-        self.Close(True)
-
-    # example function // no use
-    def OnHello(self, event):
-        """Say hello to the user."""
-        wx.MessageBox('Hello user!')
-
-    # example function
-    def OnAbout(self, event):
-        """Display an About Dialog"""
-        wx.MessageBox("Set masses for 2 blocks and ravel\
-                      before their number of collisions",
-                      "About Collision counter",
-                      wx.OK | wx.ICON_INFORMATION)
+    def on_play(self, event):
+        if not self.timer.IsRunning():
+            self.timer.Start(10)  # 10ms intervals
+            self.buttons["play"].SetLabel("Stop")
+        else:
+            self.timer.Stop()
+            self.buttons["play"].SetLabel("Play")

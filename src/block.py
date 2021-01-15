@@ -15,7 +15,7 @@ class Block:
         # draw block ?
         pass
 
-    def setVelocity(self, velocity):
+    def set_velocity(self, velocity):
         self.velocity = velocity
 
     def collide(self, collider):
@@ -69,6 +69,6 @@ class Block:
             we can then use E1 to find collider.FV once we have self.FV
         --------------------------------------------------------------------------------
         """
-        newVelocity = (collider.mass * (2 * collider.velocity - self.velocity) + self.mass * self.velocity) / (self.mass + collider.mass)
-        collider.setVelocity(self.velocity + newVelocity - collider.velocity)
-        self.setVelocity(newVelocity)
+        new_velocity = (collider.mass * (2 * collider.velocity - self.velocity) + self.mass * self.velocity) / (self.mass + collider.mass)
+        collider.set_velocity(self.velocity + new_velocity - collider.velocity)
+        self.set_velocity(new_velocity)
